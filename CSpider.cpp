@@ -8,7 +8,9 @@
 #include "terasic_os.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h> // sleep
 #include "CSpider.h"
+#include "SpiderDefs.h"
 //#include <Math.h>
 
 
@@ -76,7 +78,7 @@ bool CSpider::Init(void){
 	bool bSuccess;
 	int i,j,nJointNum;
 	CSpiderLeg::JOINT_ID szJoint[] = {CSpiderLeg::Hip, CSpiderLeg::Knee, CSpiderLeg::Ankle};
-  uint32_t Timeout,Start_Time;
+  uint32_t Start_Time;
 	if (m_bDebugDump)
 		printf("[Spider]Init\r\n");
 	////////////////////////
@@ -101,23 +103,18 @@ bool CSpider::Init(void){
 }
 void CSpider::SetFootY(uint8_t Leg,float Angle)
 {
-  float KneeAngle  = Angle;
-  float AnkleAngle = Angle;
-  if(Angle < 90 && Angle > -90)
-  {
-	  if(KneeAngle > 90)
-		Angle =  90;
-	  else if(Angle <-90)
-		Angle = -90;
-	  m_szLeg[Leg]->MoveJoint(CSpiderLeg::Ankle,AnkleAngle);
-	  m_szLeg[Leg]->MoveJoint(CSpiderLeg::Knee,KneeAngle);
-  }
-
+  if(Angle < DEGREE_MIN)
+    Angle = DEGREE_MIN;
+  else if (Angle > DEGREE_MAX )
+    Angle = DEGREE_MAX;
+  m_szLeg[Leg]->MoveJoint(CSpiderLeg::Ankle,Angle);
+  m_szLeg[Leg]->MoveJoint(CSpiderLeg::Knee,Angle);
 }
+
 bool CSpider::WaitReady(uint32_t Timeout){
 
 	bool bReady = false;
-	uint32_t TimeStart;
+	uint32_t TimeStart=0;
 //	uint32_t Timeout;
 //	Timeout = alt_nticks() + (uint32_t)(fTimeoutSecond * (float)alt_ticks_per_second());
 //	Timeout = OS_GetTickCount() + (uint32_t)(fTimeoutSecond * (float)OS_TicksPerSecond());
@@ -717,3 +714,33 @@ void CSpider::DEMO_Dance(uint8_t Repeat_Num)
 	}
 }
 
+void CSpider::TestLegs()
+{
+//  typedef enum{
+//    LEG_RF,
+//    LEG_RM,
+//    LEG_RB,
+//    LEG_LF,
+//    LEG_LM,
+//    LEG_LB,
+//    LEG_NUM
+//  }LEG_ID;
+  for(int i=0;i<LEG_NUM;i++)
+  {
+//    typedef enum{
+//      Hip=0,
+//      Knee,
+//      Ankle,
+//      JOINT_NUM
+//    }JOINT_ID;
+    for(int j=0;j<CSpiderLeg::JOINT_NUM;j++){
+      m_szLeg[i]->MoveJoint((CSpiderLeg::JOINT_ID)j,DEGREE_MIN);
+      WaitReady(ReadyTime());
+      m_szLeg[i]->MoveJoint((CSpiderLeg::JOINT_ID)j,DEGREE_MAX);
+      WaitReady(ReadyTime());
+      m_szLeg[i]->MoveJoint((CSpiderLeg::JOINT_ID)j,0.0);
+      WaitReady(ReadyTime());
+      sleep(1);
+    }
+  }
+}

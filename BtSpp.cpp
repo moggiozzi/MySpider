@@ -5,7 +5,7 @@ extern "C" {
 #include <bluetooth/sdp.h>
 #include <bluetooth/sdp_lib.h>
 #include <bluetooth/rfcomm.h>
-#include "BtSPP.h"
+#include "BtSpp.h"
 }
 
 #define MY_RF_CHANNEL 22

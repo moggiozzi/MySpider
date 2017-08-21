@@ -15,6 +15,7 @@
 #define H2F_LW_REGS_SPAN ( 0x04000000 )
 #define H2F_LW_REGS_MASK ( H2F_LW_REGS_SPAN - 1 )
 
+//#define DEBUG_CMMAP
 
 CMMap::CMMap(int MapID):
 	m_fd(-1),
@@ -74,7 +75,9 @@ bool CMMap::map(uint32_t addr_base, uint32_t addr_span, uint32_t addr_mask){
 			bSuccess = true;
 			m_fd = fd;
 			m_virtual_base = virtual_base;
-			
+#ifdef DEBUG_CMMAP
+			printf("DEBUG: mmap addr 0x%08X len %d\n", addr_base, addr_span);
+#endif
 		}
 	}
 		
@@ -101,7 +104,9 @@ bool CMMap::Reg32_Write(uint32_t Addr, uint32_t Index, uint32_t Value){
 		
 	reg_virtual_base=(char *)m_virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + Addr + Index*4 ) & ( unsigned long)( m_addr_mask ) );
 	*(uint32_t *)reg_virtual_base = Value;
-	
+#ifdef DEBUG_CMMAP
+	printf("DEBUG: mmap write addr 0x%08X val %X\n", m_addr_base+Addr+Index*4, Value);
+#endif
 	return true;
 	
 }
@@ -115,6 +120,8 @@ uint32_t CMMap::Reg32_Read(uint32_t Addr, uint32_t Index){
 		
 	reg_virtual_base=(char *)m_virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + Addr + Index*4 ) & ( unsigned long)( m_addr_mask ) );
 	Value = *(uint32_t *)reg_virtual_base;	
-	
+#ifdef DEBUG_CMMAP
+	printf("DEBUG: mmap read addr 0x%08X val %X\n", m_addr_base+Addr+Index*4, Value);
+#endif
 	return Value;
 }

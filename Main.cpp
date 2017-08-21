@@ -33,6 +33,7 @@ typedef enum{
 	CMD_JOYSTICK,
 	CMD_ALL,
 	CMD_IDLE,
+	CMD_TEST,
 }COMMAND_ID;
 
 
@@ -72,6 +73,94 @@ static void *bluetooth_spp_thread(void *ptr)
 	return 0;
 }
 
+static void *keyboard_thread(void *ptr)
+{
+	CQueueCommand *pQueueCommand;
+	int Command, Param;
+	pQueueCommand = (CQueueCommand *)ptr;
+
+	uint32_t val = 1;
+	volatile uint32_t * cmd = &val;
+	if(cmd)
+	{
+	while(1)
+		if (pQueueCommand->IsEmpty()){
+			//sleep(10);
+			printf("[TEST]\r\n");
+		   Command = CMD_TEST;
+		   pQueueCommand->Push(Command, Param);
+		   continue;
+		}
+	}
+	else
+	{
+	while(1)
+		if (pQueueCommand->IsEmpty()){
+			printf("[TEST]MOVE_FORWARD\r\n");
+		   Command = CMD_FORDWARD;
+		   pQueueCommand->Push(Command, Param);
+		   continue;
+		}
+	}
+	printf("[KB]Start Service\r\n");
+	while(1){
+		printf("[KB]Lisen...\r\n");
+		while(1){
+			char c = getchar();
+			printf("[KB]%c\r\n",c);
+			switch(c){
+			//CMD_AT,
+			case 'w':
+				Command = CMD_FORDWARD;
+			break;
+			case 's':
+				Command = CMD_BACKWARD;
+				break;
+			case 'd':
+				Command = CMD_TURN_RIHGT;
+				break;
+			case 'a':
+				Command = CMD_TURN_LEFT;
+				break;
+			//CMD_TURN_RIHGT_DGREE,
+			//CMD_TURN_LEFT_DGREE,
+			case ' ':
+				Command = CMD_STOP;
+				break;
+			//CMD_SPPED,
+			//CMD_TILTL,
+			//CMD_TILTR,
+			//CMD_TILTF,
+			//CMD_TILTB,
+			//CMD_TILTN,
+			//CMD_Query_Version,
+			//CMD_JOYSTICK,
+			//CMD_ALL,
+
+			//case '\n': // Enter
+			default:
+				Command = CMD_IDLE;
+			}
+			if (Command != CMD_IDLE){
+				// push command to command queue
+				if (Command == CMD_STOP)
+				   pQueueCommand->Clear();
+				// push command to command queue
+				if (!pQueueCommand->IsFull()){
+				   pQueueCommand->Push(Command, Param);
+				    }
+				/*if (!pQueueCommand->IsFull()){
+					pQueueCommand->Push(Command, Param);
+				}*/
+			}
+		}
+		printf("[KB]Exit...\r\n");
+	}
+
+//	pthread_exit(0); /* exit */
+	return 0;
+}
+
 int main(int argc, char *argv[]){
 
     CSpider Spider;
@@ -87,24 +176,31 @@ int main(int argc, char *argv[]){
 //    const uint32_t MaxIdleTime = 10*60*OS_TicksPerSecond(); // spider go to sleep when exceed this time
 
 	printf("===== Spider Demo =====\r\n"); 
- 
 
 	printf("Spider Init & Standup\r\n");
 	if (!Spider.Init()){
-		printf("Spilder Init failed\r\n");
+		printf("Spider Init failed\r\n");
 	}else{
 		if (!Spider.Standup())
-			printf("Spilder Standup failed\r\n");
+			printf("Spider Standup failed\r\n");
 	}
 	Spider.SetSpeed(50);
 
-	// 
-	printf("Create Bluetooth Thread\r\n");
-	ret0=pthread_create(&id0,NULL,bluetooth_spp_thread, (void *)&QueueCommand);
+	printf("Create Keyboard Thread\r\n");
+	ret0=pthread_create(&id0,NULL,keyboard_thread, (void *)&QueueCommand);
 	if(ret0!=0){
 		printf("Creat pthread-0 error!\n");
-		//exit(1);	
-	}	
+		//exit(1);
+	}
+
+	// 
+//	printf("Create Bluetooth Thread\r\n");
+//	ret0=pthread_create(&id0,NULL,bluetooth_spp_thread, (void *)&QueueCommand);
+//	if(ret0!=0){
+//		printf("Creat pthread-0 error!\n");
+//		//exit(1);
+//	}
+
 	printf("Listen Command...\r\n");
 	  LED_PIO.SetLED(0x7f);
 	  LastActionTime = OS_GetTickCount();
@@ -207,6 +303,11 @@ int main(int argc, char *argv[]){
 					case CMD_ALL:
 						printf("CMD_ALL\n");
 						Spider.DEMO_Dance(1);
+						QueueCommand.Clear();
+						break;
+					case CMD_TEST:
+						printf("CMD_TEST\n");
+						Spider.TestLegs();
 						QueueCommand.Clear();
 						break;
 					default:printf("Nothing\n");

@@ -71,6 +71,8 @@ public:
 	void Abort(void);
 	void Sleep(void);
 	void WakeUp(void);
+
+	void TestLegs();
 };
 
 #endif /* CSPIDER_H_ */
