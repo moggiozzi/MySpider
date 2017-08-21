@@ -1,0 +1,28 @@
+; базовый адрес и размер
+; при изменении базового адреса необходимо изменить таблицу MMU в alt_pt.c
+RAM 0x30000000 0x10000000
+{
+    VECTORS +0
+    {
+        * (VECTORS, +FIRST)
+    }
+
+    APP_CODE +0
+    {
+        * (+RO)
+    }
+    APP_DATA +0
+    {
+        * ( +RW, +ZI)
+    }
+
+;    ARM_LIB_STACKHEAP +0 EMPTY 0x100000
+; 16MB - область под DMA
+; 16MB - буфер для обмена с другим ядром (linux)
+; см. настройку областей MMU в alt_pt.c
+
+; ImageLimit(SECTION) возвращает адрес конца SECTION
+; 1GB RAM
+    ARM_LIB_STACKHEAP +0 EMPTY (0x40000000 - 0x2000000 - ImageLimit(APP_DATA))
+    { }
+}
