@@ -1,2 +1,2 @@
 # MySpider
-Hexapod software
+Hexapod linux software
